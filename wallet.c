@@ -2,6 +2,11 @@
 #include <stdlib.h>
 #include <string.h>
 
+//for resolving error caused by diff versions of cmd
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
 #define DATA_FILE "wallet.txt"
 
 void updateDashboard() {
@@ -51,6 +56,18 @@ int main() {
     int choice;
     float amount;
     char desc[101];
+    
+    //enable ANSI Escape sequence processing on Windows consoles
+    #ifdef _WIN32
+    HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+    if (hOut != INVALID_HANDLE_VALUE) {
+        DWORD dwMode = 0;
+        if (GetConsoleMode(hOut, &dwMode)) {
+            dwMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
+            SetConsoleMode(hOut, dwMode);
+        }
+    }
+    #endif
 
     // \033[s saves the baseline cursor position right there before the loop begins
     printf("\n\033[s"); 
