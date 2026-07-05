@@ -5,12 +5,12 @@
 #define DATA_FILE "wallet.txt"
 
 void updateDashboard() {
-    FILE *file = fopen(DATA_FILE, "r");
+    FILE *file = fopen(DATA_FILE, "r");//opening file in reading mode
     float balance = 0.0, amount = 0.0;
     char type[10] = "";
     char desc[101] = "No history";
     char lastType[10] = "";
-    char lastDesc[101] = "No transactions yet";
+    char lastDesc[101] = "No transactions yet";//description of last transaction
     float lastAmount = 0.0;
 
     if (file != NULL) {
@@ -36,7 +36,7 @@ void updateDashboard() {
                 balance, strcmp(lastType, "Earning") == 0 ? "[+]" : "[-]", lastAmount, lastDesc);
     }
 
-    // Printing lines with \033[K clear safeguards
+    //printing lines with \033[K clear safeguards
     printf("<<<<<<<<>>>>>>>>\033[K\n");
     printf("Menu\033[K\n");
     printf("1. Add Earning\033[K\n");
@@ -56,7 +56,7 @@ int main() {
     printf("\n\033[s"); 
 
     while (1) {
-        updateDashboard();
+        updateDashboard();//re-prints the stats
 
         if (scanf("%d", &choice) != 1) {
             while (getchar() != '\n');
@@ -65,7 +65,7 @@ int main() {
         while (getchar() != '\n'); 
 
         if (choice == 1 || choice == 2) {
-            // Request inputs cleanly on lines below the menu
+            //request inputs cleanly on lines below the menu
             printf("Amount: \033[K"); 
             scanf("%f", &amount); 
             while (getchar() != '\n');
@@ -74,16 +74,16 @@ int main() {
             fgets(desc, sizeof(desc), stdin); 
             desc[strcspn(desc, "\n")] = 0; 
 
-            FILE *file = fopen(DATA_FILE, "a");
+            FILE *file = fopen(DATA_FILE, "a");//opening file in appened mode
             if (file != NULL) {
                 fprintf(file, "%s %.2f %s\n", (choice == 1) ? "Earning" : "Expense", amount, desc);
                 fclose(file);
             }
         } else if (choice == 3) {
-            FILE *file = fopen(DATA_FILE, "w"); 
+            FILE *file = fopen(DATA_FILE, "w"); //opening file in write mode
             if (file != NULL) fclose(file);
         } else if (choice == 4) {
-            // Clear out the menu block area before exiting to leave the terminal tidy
+            //clear out the menu block area before exiting to leave the terminal tidy
             printf("\033[u\033[K[THANK YOU (:>).... App Exited Cleanly....]\n\033[K\033[K\033[K\033[K\033[K");
             break;
         }
