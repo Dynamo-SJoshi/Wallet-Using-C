@@ -2,20 +2,23 @@
 #include <stdlib.h>
 #include <string.h>
 
-//for resolving error caused by diff versions of cmd
+// for resolving error caused by diff versions of cmd
 #ifdef _WIN32
 #include <windows.h>
+  #ifndef ENABLE_VIRTUAL_TERMINAL_PROCESSING
+  #define ENABLE_VIRTUAL_TERMINAL_PROCESSING 0x0004
+  #endif
 #endif
 
 #define DATA_FILE "wallet.txt"
 
 void updateDashboard() {
-    FILE *file = fopen(DATA_FILE, "r");//opening file in reading mode
+    FILE *file = fopen(DATA_FILE, "r"); // opening file in reading mode
     float balance = 0.0, amount = 0.0;
     char type[10] = "";
     char desc[101] = "No history";
     char lastType[10] = "";
-    char lastDesc[101] = "No transactions yet";//description of last transaction
+    char lastDesc[101] = "No transactions yet"; // description of last transaction
     float lastAmount = 0.0;
 
     if (file != NULL) {
@@ -32,16 +35,18 @@ void updateDashboard() {
 
     // \033[u => resets the cursor back to the saved position before retyping
     // \033[K => clears the entire line from left to right to remove old characters
-    printf("\033[u"); 
+    // \033[2J clears the whole screen, \033[H snaps cursor to the top left
+    printf("\033[2J\033[H"); 
     
+    // FIX 1: Removed the leading \n so it doesn't push the menu down
     if (strlen(lastType) == 0) {
-        printf("\n[BALANCE: Rs.%.2f] | Last: %s\033[K\n", balance, lastDesc);
+        printf("[BALANCE: Rs.%.2f] | Last: %s\n", balance, lastDesc);
     } else {
-        printf("\n[BALANCE: Rs.%.2f] | Last: %s Rs.%.2f (%s)\033[K\n", 
+        printf("[BALANCE: Rs.%.2f] | Last: %s Rs.%.2f (%s)\n", 
                 balance, strcmp(lastType, "Earning") == 0 ? "[+]" : "[-]", lastAmount, lastDesc);
     }
 
-    //printing lines with \033[K clear safeguards
+    // printing lines with \033[K clear safeguards
     printf("<<<<<<<<>>>>>>>>\033[K\n");
     printf("Menu\033[K\n");
     printf("1. Add Earning\033[K\n");
@@ -57,7 +62,7 @@ int main() {
     float amount;
     char desc[101];
     
-    //enable ANSI Escape sequence processing on Windows consoles
+    // enable ANSI Escape sequence processing on Windows consoles
     #ifdef _WIN32
     HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
     if (hOut != INVALID_HANDLE_VALUE) {
@@ -69,11 +74,8 @@ int main() {
     }
     #endif
 
-    // \033[s saves the baseline cursor position right there before the loop begins
-    printf("\n\033[s"); 
-
     while (1) {
-        updateDashboard();//re-prints the stats
+        updateDashboard(); // re-prints the stats
 
         if (scanf("%d", &choice) != 1) {
             while (getchar() != '\n');
@@ -82,7 +84,7 @@ int main() {
         while (getchar() != '\n'); 
 
         if (choice == 1 || choice == 2) {
-            //request inputs cleanly on lines below the menu
+            // request inputs cleanly on lines below the menu
             printf("Amount: \033[K"); 
             scanf("%f", &amount); 
             while (getchar() != '\n');
@@ -91,17 +93,21 @@ int main() {
             fgets(desc, sizeof(desc), stdin); 
             desc[strcspn(desc, "\n")] = 0; 
 
-            FILE *file = fopen(DATA_FILE, "a");//opening file in appened mode
+            FILE *file = fopen(DATA_FILE, "a"); // opening file in appended mode
             if (file != NULL) {
                 fprintf(file, "%s %.2f %s\n", (choice == 1) ? "Earning" : "Expense", amount, desc);
                 fclose(file);
             }
+            
+            // FIX 2: Erase the temporary 'Amount' and 'Where' inputs before the loop restarts
+            printf("\033[A\033[K\033[A\033[K");
+            
         } else if (choice == 3) {
-            FILE *file = fopen(DATA_FILE, "w"); //opening file in write mode
+            FILE *file = fopen(DATA_FILE, "w"); // opening file in write mode
             if (file != NULL) fclose(file);
         } else if (choice == 4) {
-            //clear out the menu block area before exiting to leave the terminal tidy
-            printf("\033[u\033[K[THANK YOU (:>).... App Exited Cleanly....]\n\033[K\033[K\033[K\033[K\033[K");
+            // clear out the menu block area before exiting to leave the terminal tidy
+            printf("\033[2J\033[H[THANK YOU (:>).... App Exited Cleanly....]\n");
             break;
         }
     }
